@@ -1,6 +1,7 @@
 #include <jni.h>
 #include <string>
 #include <AndroidIO/SuperpoweredAndroidAudioIO.h>
+#include <Superpowered.h>
 #include <SuperpoweredReverb.h>
 #include <SuperpoweredSimple.h>
 #include <malloc.h>
@@ -19,6 +20,7 @@ static bool audioProcessing (
     SuperpoweredShortIntToFloat(audio, floatBuffer, (unsigned int)numberOfFrames);
     reverb->process(floatBuffer, floatBuffer, (unsigned int)numberOfFrames);
     SuperpoweredFloatToShortInt(floatBuffer, audio, (unsigned int)numberOfFrames);
+    //memset(audio, 0, numberOfFrames * 4);
     return true;
 }
 
@@ -30,6 +32,17 @@ Java_com_superpowered_effect_MainActivity_StartAudio (
         jint samplerate,
         jint buffersize
 ) {
+    SuperpoweredInitialize(
+            "ExampleLicenseKey-WillExpire-OnNextUpdate",
+            false, // enableAudioAnalysis (using SuperpoweredAnalyzer, SuperpoweredLiveAnalyzer, SuperpoweredWaveform or SuperpoweredBandpassFilterbank)
+            false, // enableFFTAndFrequencyDomain (using SuperpoweredFrequencyDomain, SuperpoweredFFTComplex, SuperpoweredFFTReal or SuperpoweredPolarFFT)
+            false, // enableAudioTimeStretching (using SuperpoweredTimeStretching)
+            true,  // enableAudioEffects (using any SuperpoweredFX class)
+            false, // enableAudioPlayerAndDecoder (using SuperpoweredAdvancedAudioPlayer or SuperpoweredDecoder)
+            false, // enableCryptographics (using Superpowered::RSAPublicKey, Superpowered::RSAPrivateKey, Superpowered::hasher or Superpowered::AES)
+            false  // enableNetworking (using Superpowered::httpRequest)
+    );
+
     // allocate audio buffer
     floatBuffer = (float *)malloc(sizeof(float) * 2 * buffersize);
 
@@ -46,8 +59,7 @@ Java_com_superpowered_effect_MainActivity_StartAudio (
             audioProcessing,                // process callback function
             NULL,                           // clientData
             -1,                             // inputStreamType (-1 = default)
-            -1,                             // outputStreamType (-1 = default)
-            buffersize * 2                  // latencySamples
+            -1                              // outputStreamType (-1 = default)
     );
 }
 

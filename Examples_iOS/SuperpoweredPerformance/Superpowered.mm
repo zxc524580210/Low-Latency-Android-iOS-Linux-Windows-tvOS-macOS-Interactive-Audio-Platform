@@ -1,3 +1,4 @@
+#import "SuperpoweredClass.h"
 #import "Superpowered.h"
 #import "SuperpoweredAdvancedAudioPlayer.h"
 #import "SuperpoweredReverb.h"
@@ -16,7 +17,7 @@
  You can perfectly mix it with Objective-C or Swift, until you keep the member variables and C++ related includes here.
  Yes, the header file (.h) isn't the only place for member variables.
  */
-@implementation Superpowered {
+@implementation SuperpoweredAudio {
     SuperpoweredAdvancedAudioPlayer *player;
     SuperpoweredFX *effects[NUMFXUNITS];
     SuperpoweredIOSAudioIO *output;
@@ -92,8 +93,8 @@
 }
 
 // This is where the Superpowered magic happens.
-static bool audioProcessing(void *clientdata, float **buffers, unsigned int inputChannels, unsigned int outputChannels, unsigned int numberOfSamples, unsigned int samplerate, uint64_t hostTime) {
-    __unsafe_unretained Superpowered *self = (__bridge Superpowered *)clientdata;
+static bool audioProcessing(void *clientdata, float **inputBuffers, unsigned int inputChannels, float **outputBuffers, unsigned int outputChannels, unsigned int numberOfSamples, unsigned int samplerate, uint64_t hostTime) {
+    __unsafe_unretained SuperpoweredAudio *self = (__bridge SuperpoweredAudio *)clientdata;
     uint64_t startTime = mach_absolute_time();
 
     if (samplerate != self->lastSamplerate) { // Has samplerate changed?
@@ -129,13 +130,25 @@ static bool audioProcessing(void *clientdata, float **buffers, unsigned int inpu
     };
 
     self->playing = self->player->playing;
-    if (!silence) SuperpoweredDeInterleave(self->stereoBuffer, buffers[0], buffers[1], numberOfSamples); // The stereoBuffer is ready now, let's put the finished audio into the requested buffers.
+    if (!silence) SuperpoweredDeInterleave(self->stereoBuffer, outputBuffers[0], outputBuffers[1], numberOfSamples); // The stereoBuffer is ready now, let's put the finished audio into the requested buffers.
     return !silence;
 }
 
 - (id)init {
     self = [super init];
     if (!self) return nil;
+    
+    SuperpoweredInitialize(
+                           "ExampleLicenseKey-WillExpire-OnNextUpdate",
+                           false, // enableAudioAnalysis (using SuperpoweredAnalyzer, SuperpoweredLiveAnalyzer, SuperpoweredWaveform or SuperpoweredBandpassFilterbank)
+                           false, // enableFFTAndFrequencyDomain (using SuperpoweredFrequencyDomain, SuperpoweredFFTComplex, SuperpoweredFFTReal or SuperpoweredPolarFFT)
+                           false, // enableAudioTimeStretching (using SuperpoweredTimeStretching)
+                           true, // enableAudioEffects (using any SuperpoweredFX class)
+                           true, // enableAudioPlayerAndDecoder (using SuperpoweredAdvancedAudioPlayer or SuperpoweredDecoder)
+                           false, // enableCryptographics (using Superpowered::RSAPublicKey, Superpowered::RSAPrivateKey, Superpowered::hasher or Superpowered::AES)
+                           false  // enableNetworking (using Superpowered::httpRequest)
+                           );
+    
     SuperpoweredFFTTest();
 
     started = false;
@@ -170,7 +183,7 @@ static bool audioProcessing(void *clientdata, float **buffers, unsigned int inpu
     eq->bands[2] = 2.0f;
     effects[EQINDEX] = eq;
 
-    output = [[SuperpoweredIOSAudioIO alloc] initWithDelegate:(id<SuperpoweredIOSAudioIODelegate>)self preferredBufferSize:12 preferredMinimumSamplerate:44100 audioSessionCategory:AVAudioSessionCategoryPlayback channels:2 audioProcessingCallback:audioProcessing clientdata:(__bridge void *)self];
+    output = [[SuperpoweredIOSAudioIO alloc] initWithDelegate:(id<SuperpoweredIOSAudioIODelegate>)self preferredBufferSize:12 preferredSamplerate:44100 audioSessionCategory:AVAudioSessionCategoryPlayback channels:2 audioProcessingCallback:audioProcessing clientdata:(__bridge void *)self];
 
     return self;
 }

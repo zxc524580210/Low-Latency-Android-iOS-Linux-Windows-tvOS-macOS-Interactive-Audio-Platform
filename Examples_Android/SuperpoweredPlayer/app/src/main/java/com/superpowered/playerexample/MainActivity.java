@@ -7,12 +7,10 @@ import android.content.Context;
 import android.widget.Button;
 import android.view.View;
 import android.util.Log;
-import android.os.Build;
 import android.os.Bundle;
 import java.io.IOException;
 
 public class MainActivity extends AppCompatActivity {
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -21,12 +19,10 @@ public class MainActivity extends AppCompatActivity {
         // Get the device's sample rate and buffer size to enable
         // low-latency Android audio output, if available.
         String samplerateString = null, buffersizeString = null;
-        if (Build.VERSION.SDK_INT >= 17) {
-            AudioManager audioManager = (AudioManager) this.getSystemService(Context.AUDIO_SERVICE);
-            if (audioManager != null) {
-                samplerateString = audioManager.getProperty(AudioManager.PROPERTY_OUTPUT_SAMPLE_RATE);
-                buffersizeString = audioManager.getProperty(AudioManager.PROPERTY_OUTPUT_FRAMES_PER_BUFFER);
-            }
+        AudioManager audioManager = (AudioManager) this.getSystemService(Context.AUDIO_SERVICE);
+        if (audioManager != null) {
+            samplerateString = audioManager.getProperty(AudioManager.PROPERTY_OUTPUT_SAMPLE_RATE);
+            buffersizeString = audioManager.getProperty(AudioManager.PROPERTY_OUTPUT_FRAMES_PER_BUFFER);
         }
         if (samplerateString == null) samplerateString = "48000";
         if (buffersizeString == null) buffersizeString = "480";
@@ -47,6 +43,7 @@ public class MainActivity extends AppCompatActivity {
         System.loadLibrary("PlayerExample");    // load native library
         StartAudio(samplerate, buffersize);             // start audio engine
         OpenFile(path, fileOffset, fileLength);         // open audio file from APK
+        // If the application crashes, please disable Instant Run under Build, Execution, Deployment in preferences.
     }
 
     // Handle Play/Pause button toggle.

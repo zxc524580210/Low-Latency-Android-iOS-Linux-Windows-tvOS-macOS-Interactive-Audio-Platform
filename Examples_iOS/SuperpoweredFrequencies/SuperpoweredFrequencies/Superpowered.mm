@@ -1,5 +1,6 @@
 #import "SuperpoweredFrequencies-Bridging-Header.h"
 #import "SuperpoweredIOSAudioIO.h"
+#include "Superpowered.h"
 #include "SuperpoweredBandpassFilterbank.h"
 #include "SuperpoweredSimple.h"
 
@@ -10,7 +11,7 @@
     unsigned int samplerate, bandsWritePos, bandsReadPos, bandsPos, lastNumberOfSamples;
 }
 
-static bool audioProcessing(void *clientdata, float **buffers, unsigned int inputChannels, unsigned int outputChannels, unsigned int numberOfSamples, unsigned int samplerate, uint64_t hostTime) {
+static bool audioProcessing(void *clientdata, float **inputBuffers, unsigned int inputChannels, float **outputBuffers, unsigned int outputChannels, unsigned int numberOfSamples, unsigned int samplerate, uint64_t hostTime) {
     __unsafe_unretained Superpowered *self = (__bridge Superpowered *)clientdata;
     if (samplerate != self->samplerate) {
         self->samplerate = samplerate;
@@ -19,7 +20,7 @@ static bool audioProcessing(void *clientdata, float **buffers, unsigned int inpu
 
     // Mix the non-interleaved input to interleaved.
     float interleaved[numberOfSamples * 2 + 16];
-    SuperpoweredInterleave(buffers[0], buffers[1], interleaved, numberOfSamples);
+    SuperpoweredInterleave(inputBuffers[0], inputBuffers[1], interleaved, numberOfSamples);
 
     // Get the next position to write.
     unsigned int writePos = self->bandsWritePos++ & 127;
@@ -39,6 +40,18 @@ static bool audioProcessing(void *clientdata, float **buffers, unsigned int inpu
 - (id)init {
     self = [super init];
     if (!self) return nil;
+    
+    SuperpoweredInitialize(
+                           "ExampleLicenseKey-WillExpire-OnNextUpdate",
+                           true, // enableAudioAnalysis (using SuperpoweredAnalyzer, SuperpoweredLiveAnalyzer, SuperpoweredWaveform or SuperpoweredBandpassFilterbank)
+                           false, // enableFFTAndFrequencyDomain (using SuperpoweredFrequencyDomain, SuperpoweredFFTComplex, SuperpoweredFFTReal or SuperpoweredPolarFFT)
+                           false, // enableAudioTimeStretching (using SuperpoweredTimeStretching)
+                           false, // enableAudioEffects (using any SuperpoweredFX class)
+                           false, // enableAudioPlayerAndDecoder (using SuperpoweredAdvancedAudioPlayer or SuperpoweredDecoder)
+                           false, // enableCryptographics (using Superpowered::RSAPublicKey, Superpowered::RSAPrivateKey, Superpowered::hasher or Superpowered::AES)
+                           false  // enableNetworking (using Superpowered::httpRequest)
+                           );
+    
     samplerate = 44100;
     bandsWritePos = bandsReadPos = bandsPos = lastNumberOfSamples = 0;
     memset(bands, 0, 128 * 8 * sizeof(float));
@@ -47,7 +60,7 @@ static bool audioProcessing(void *clientdata, float **buffers, unsigned int inpu
     float widths[8] = { 1, 1, 1, 1, 1, 1, 1, 1 };
     filters = new SuperpoweredBandpassFilterbank(8, frequencies, widths, samplerate);
 
-    audioIO = [[SuperpoweredIOSAudioIO alloc] initWithDelegate:(id<SuperpoweredIOSAudioIODelegate>)self preferredBufferSize:12 preferredMinimumSamplerate:44100 audioSessionCategory:AVAudioSessionCategoryRecord channels:2 audioProcessingCallback:audioProcessing clientdata:(__bridge void *)self];
+    audioIO = [[SuperpoweredIOSAudioIO alloc] initWithDelegate:(id<SuperpoweredIOSAudioIODelegate>)self preferredBufferSize:12 preferredSamplerate:44100 audioSessionCategory:AVAudioSessionCategoryRecord channels:2 audioProcessingCallback:audioProcessing clientdata:(__bridge void *)self];
     [audioIO start];
 
     return self;

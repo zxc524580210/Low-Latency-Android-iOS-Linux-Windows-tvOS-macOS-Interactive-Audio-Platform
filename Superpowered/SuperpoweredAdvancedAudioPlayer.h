@@ -1,6 +1,8 @@
 #ifndef Header_SuperpoweredAdvancedAudioPlayer
 #define Header_SuperpoweredAdvancedAudioPlayer
 
+#include "SuperpoweredHTTP.h"
+
 struct SuperpoweredAdvancedAudioPlayerInternals;
 struct SuperpoweredAdvancedAudioPlayerBase;
 
@@ -158,8 +160,8 @@ typedef void (* SuperpoweredAdvancedAudioPlayerCallback) (void *clientData, Supe
  @param beatIndex Which beat has just happened (1 [1.0f-1.999f], 2 [2.0f-2.999f], 3 [3.0f-3.99f], 4 [4.0f-4.99f]). A value of 0 means "don't know". Read only.
  @param bufferStartPercent What is buffered from the original source, start point. Will always be 0 for non-network sources (files). Read only.
  @param bufferEndPercent What is buffered from the original source, end point. Will always be 1.0f for non-network sources (files). Read only.
- @param currentBps The current download speed.
- @param loadErrorCode HTTP error code for SuperpoweredAdvancedAudioPlayerEvent_LoadError. The value of 1 means no internet connection.
+ @param currentBps For HLS only. Updated after each segment download to indicate the actual network throughput (for best stream selection).
+ @param loadStatusCode @see @c Superpowered::httpResponse
  @param syncMode The current sync mode (off, tempo, or tempo and beat).
  @param fixDoubleOrHalfBPM If tempo is >1.4f or <0.6f, it will treat the bpm as half or double. Good for certain genres. False by default.
  @param dynamicHLSAlternativeSwitching Dynamicly changing the current HLS alternative to match the available network bandwidth. Default is true.
@@ -171,6 +173,7 @@ typedef void (* SuperpoweredAdvancedAudioPlayerCallback) (void *clientData, Supe
  @param maxTimeStretchingTempo Will not time-stretch, just resample above this tempo. Default: 2.0f (recommended value for low CPU on older mobile devices, such as the first iPad).
  @param handleStems Output 4 distinct stereo pairs for Native Instruments STEMS format. Default: false (output stem 0 for STEMS).
  @param defaultQuantum Reserved for future use.
+ @param hlsLiveLatencySeconds Number of seconds of latency for a HLS live stream. The player will try to stay at this value on every reconnect. Default: -1 (stream starts at the first segment specified by the server)
  @param fullyDownloadedFilePath The file system path of the fully downloaded audio file for progressive downloads. Progressive downloads are automatically removed if no SuperpoweredAdvancedAudioPlayer instance is active for the same url. This parameter provides an alternative to save the file.
  @param tempFolderPath The path for temporary files.
 */
@@ -211,7 +214,7 @@ public:
     float bufferStartPercent;
     float bufferEndPercent;
     int currentBps;
-    int loadErrorCode;
+    int loadStatusCode;
 
     char *fullyDownloadedFilePath;
     static char *tempFolderPath;
@@ -228,6 +231,7 @@ public:
     float maxTimeStretchingTempo;
     bool handleStems;
     double defaultQuantum;
+    char hlsLiveLatencySeconds;
 
 /**
  @brief Set the folder path for temporary files. Used for HLS and progressive download only.
@@ -263,9 +267,9 @@ public:
  Tempo, pitchShift, masterTempo and syncMode are NOT changed if you open a new one. Do not call open() in the audio processing callback.
  
  @param path Full file system path or progressive download path (http or https).
- @param customHTTPHeaders NULL terminated list of custom headers for http communication.
+ @param customHTTPRequest If custom HTTP communication is required (such as sending http headers for authorization), pass a fully prepared http request object. The player will copy this.
 */
-    void open(const char *path, char **customHTTPHeaders = 0);
+    void open(const char *path, Superpowered::httpRequest *customHTTPRequest = 0);
     
 /**
  @brief Opens an audio file with playback paused.
@@ -275,18 +279,18 @@ public:
  @param path Full file system path or progressive download path (http or https).
  @param offset The byte offset inside the file.
  @param length The byte length from the offset.
- @param customHTTPHeaders NULL terminated list of custom headers for http communication.
+ @param customHTTPRequest If custom HTTP communication is required (such as sending http headers for authorization), pass a fully prepared http request object. The player will copy this.
 */
-    void open(const char *path, int offset, int length, char **customHTTPHeaders = 0);
+    void open(const char *path, int offset, int length, Superpowered::httpRequest *customHTTPRequest = 0);
 /**
  @brief Opens a HTTP Live Streaming stream with playback paused.
  
  Tempo, pitchShift, masterTempo and syncMode are NOT changed if you open a new one. Do not call openHLS() in the audio processing callback.
  
  @param url URL of the stream.
- @param customHTTPHeaders NULL terminated list of custom headers for http communication.
+ @param customHTTPRequest If custom HTTP communication is required (such as sending http headers for authorization), pass a fully prepared http request object. The player will copy this.
  */
-    void openHLS(const char *url, char **customHTTPHeaders = 0);
+    void openHLS(const char *url, Superpowered::httpRequest *customHTTPRequest = 0);
 
 /**
  @brief Starts playback.

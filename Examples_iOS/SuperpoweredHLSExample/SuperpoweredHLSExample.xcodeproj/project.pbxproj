@@ -41,6 +41,7 @@
 		1B3F0BCC1B16071300F50B00 /* SuperpoweredSimple.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SuperpoweredSimple.h; path = ../../Superpowered/SuperpoweredSimple.h; sourceTree = "<group>"; };
 		1B52984F1C05BCBA00647594 /* SuperpoweredIOSAudioIO.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SuperpoweredIOSAudioIO.h; path = ../../Superpowered/SuperpoweredIOSAudioIO.h; sourceTree = "<group>"; };
 		1B5298501C05BCBA00647594 /* SuperpoweredIOSAudioIO.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; name = SuperpoweredIOSAudioIO.mm; path = ../../Superpowered/SuperpoweredIOSAudioIO.mm; sourceTree = "<group>"; };
+		211F35D422808323006DE760 /* Superpowered.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = Superpowered.h; path = ../../Superpowered/Superpowered.h; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -71,6 +72,7 @@
 				1B52984F1C05BCBA00647594 /* SuperpoweredIOSAudioIO.h */,
 				1B5298501C05BCBA00647594 /* SuperpoweredIOSAudioIO.mm */,
 				1B3F0BCC1B16071300F50B00 /* SuperpoweredSimple.h */,
+				211F35D422808323006DE760 /* Superpowered.h */,
 				1B3F0B8B1B15A04100F50B00 /* SuperpoweredHLSExample */,
 				1B3F0B8A1B15A04100F50B00 /* Products */,
 			);
@@ -134,7 +136,7 @@
 		1B3F0B811B15A04100F50B00 /* Project object */ = {
 			isa = PBXProject;
 			attributes = {
-				LastUpgradeCheck = 0940;
+				LastUpgradeCheck = 1020;
 				ORGANIZATIONNAME = imect;
 				TargetAttributes = {
 					1B3F0B881B15A04100F50B00 = {
@@ -150,7 +152,7 @@
 			};
 			buildConfigurationList = 1B3F0B841B15A04100F50B00 /* Build configuration list for PBXProject "SuperpoweredHLSExample" */;
 			compatibilityVersion = "Xcode 3.2";
-			developmentRegion = English;
+			developmentRegion = en;
 			hasScannedForEncodings = 0;
 			knownRegions = (
 				en,
@@ -217,6 +219,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_LOCALIZABILITY_NONLOCALIZED = YES;
 				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
 				CLANG_CXX_LIBRARY = "libc++";
 				CLANG_ENABLE_MODULES = YES;
@@ -271,6 +274,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_LOCALIZABILITY_NONLOCALIZED = YES;
 				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
 				CLANG_CXX_LIBRARY = "libc++";
 				CLANG_ENABLE_MODULES = YES;

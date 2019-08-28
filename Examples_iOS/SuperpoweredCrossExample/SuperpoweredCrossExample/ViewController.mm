@@ -1,4 +1,5 @@
 #import "ViewController.h"
+#import "Superpowered.h"
 #import "SuperpoweredAdvancedAudioPlayer.h"
 #import "SuperpoweredFilter.h"
 #import "SuperpoweredRoll.h"
@@ -8,7 +9,7 @@
 #import <stdlib.h>
 
 #define HEADROOM_DECIBEL 3.0f
-static const float headroom = powf(10.0f, -HEADROOM_DECIBEL * 0.025);
+static const float headroom = powf(10.0f, -HEADROOM_DECIBEL * 0.05);
 
 /*
  This is a .mm file, meaning it's Objective-C++.
@@ -45,7 +46,7 @@ void playerEventCallbackB(void *clientData, SuperpoweredAdvancedAudioPlayerEvent
 }
 
 // This is where the Superpowered magic happens.
-static bool audioProcessing(void *clientdata, float **buffers, unsigned int inputChannels, unsigned int outputChannels, unsigned int numberOfSamples, unsigned int samplerate, uint64_t hostTime) {
+static bool audioProcessing(void *clientdata, float **inputBuffers, unsigned int inputChannels, float **outputBuffers, unsigned int outputChannels, unsigned int numberOfSamples, unsigned int samplerate, uint64_t hostTime) {
     __unsafe_unretained ViewController *self = (__bridge ViewController *)clientdata;
     if (samplerate != self->lastSamplerate) { // Has samplerate changed?
         self->lastSamplerate = samplerate;
@@ -71,7 +72,7 @@ static bool audioProcessing(void *clientdata, float **buffers, unsigned int inpu
         self->flanger->process(self->stereoBuffer, self->stereoBuffer, numberOfSamples);
     };
 
-    if (!silence) SuperpoweredDeInterleave(self->stereoBuffer, buffers[0], buffers[1], numberOfSamples); // The stereoBuffer is ready now, let's put the finished audio into the requested buffers.
+    if (!silence) SuperpoweredDeInterleave(self->stereoBuffer, outputBuffers[0], outputBuffers[1], numberOfSamples); // The stereoBuffer is ready now, let's put the finished audio into the requested buffers.
     return !silence;
 }
 
@@ -81,6 +82,17 @@ static bool audioProcessing(void *clientdata, float **buffers, unsigned int inpu
     crossValue = volB = 0.0f;
     volA = 1.0f * headroom;
     if (posix_memalign((void **)&stereoBuffer, 16, 4096 + 128) != 0) abort(); // Allocating memory, aligned to 16.
+    
+    SuperpoweredInitialize(
+                           "ExampleLicenseKey-WillExpire-OnNextUpdate",
+                           false, // enableAudioAnalysis (using SuperpoweredAnalyzer, SuperpoweredLiveAnalyzer, SuperpoweredWaveform or SuperpoweredBandpassFilterbank)
+                           false, // enableFFTAndFrequencyDomain (using SuperpoweredFrequencyDomain, SuperpoweredFFTComplex, SuperpoweredFFTReal or SuperpoweredPolarFFT)
+                           false, // enableAudioTimeStretching (using SuperpoweredTimeStretching)
+                           true, // enableAudioEffects (using any SuperpoweredFX class)
+                           true, // enableAudioPlayerAndDecoder (using SuperpoweredAdvancedAudioPlayer or SuperpoweredDecoder)
+                           false, // enableCryptographics (using Superpowered::RSAPublicKey, Superpowered::RSAPrivateKey, Superpowered::hasher or Superpowered::AES)
+                           false  // enableNetworking (using Superpowered::httpRequest)
+                           );
 
     playerA = new SuperpoweredAdvancedAudioPlayer((__bridge void *)self, playerEventCallbackA, 44100, 0);
     playerA->open([[[NSBundle mainBundle] pathForResource:@"lycka" ofType:@"mp3"] fileSystemRepresentation]);
@@ -93,7 +105,7 @@ static bool audioProcessing(void *clientdata, float **buffers, unsigned int inpu
     filter = new SuperpoweredFilter(SuperpoweredFilter_Resonant_Lowpass, 44100);
     flanger = new SuperpoweredFlanger(44100);
 
-    output = [[SuperpoweredIOSAudioIO alloc] initWithDelegate:(id<SuperpoweredIOSAudioIODelegate>)self preferredBufferSize:12 preferredMinimumSamplerate:44100 audioSessionCategory:AVAudioSessionCategoryPlayback channels:2 audioProcessingCallback:audioProcessing clientdata:(__bridge void *)self];
+    output = [[SuperpoweredIOSAudioIO alloc] initWithDelegate:(id<SuperpoweredIOSAudioIODelegate>)self preferredBufferSize:12 preferredSamplerate:44100 audioSessionCategory:AVAudioSessionCategoryPlayback channels:2 audioProcessingCallback:audioProcessing clientdata:(__bridge void *)self];
     [output start];
 }
 

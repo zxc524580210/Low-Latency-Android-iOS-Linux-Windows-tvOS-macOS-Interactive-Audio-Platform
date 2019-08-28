@@ -1,5 +1,6 @@
 #import "ViewController.h"
 #import "SuperpoweredIOSAudioIO.h"
+#include "Superpowered.h"
 #include "SuperpoweredAdvancedAudioPlayer.h"
 #include "SuperpoweredSimple.h"
 
@@ -55,19 +56,31 @@ static void playerEventCallback(void *clientData, SuperpoweredAdvancedAudioPlaye
 }
 
 // Called periodically by the operating system's audio stack to provide audio output.
-static bool audioProcessing(void *clientdata, float **buffers, unsigned int inputChannels, unsigned int outputChannels, unsigned int numberOfSamples, unsigned int samplerate, uint64_t hostTime) {
+static bool audioProcessing(void *clientdata, float **inputBuffers, unsigned int inputChannels, float **outputBuffers, unsigned int outputChannels, unsigned int numberOfSamples, unsigned int samplerate, uint64_t hostTime) {
     __unsafe_unretained ViewController *self = (__bridge ViewController *)clientdata;
     if (self->samplerate != samplerate) {
         self->samplerate = samplerate;
         self->player->setSamplerate(self->samplerate);
     };
     bool hasAudio = self->player->process(self->interleavedBuffer, false, numberOfSamples);
-    if (hasAudio) SuperpoweredDeInterleave(self->interleavedBuffer, buffers[0], buffers[1], numberOfSamples);
+    if (hasAudio) SuperpoweredDeInterleave(self->interleavedBuffer, outputBuffers[0], outputBuffers[1], numberOfSamples);
     return hasAudio;
 }
 
 - (void)viewDidLoad {
     [super viewDidLoad];
+    
+    SuperpoweredInitialize(
+                           "ExampleLicenseKey-WillExpire-OnNextUpdate",
+                           false, // enableAudioAnalysis (using SuperpoweredAnalyzer, SuperpoweredLiveAnalyzer, SuperpoweredWaveform or SuperpoweredBandpassFilterbank)
+                           false, // enableFFTAndFrequencyDomain (using SuperpoweredFrequencyDomain, SuperpoweredFFTComplex, SuperpoweredFFTReal or SuperpoweredPolarFFT)
+                           false, // enableAudioTimeStretching (using SuperpoweredTimeStretching)
+                           false, // enableAudioEffects (using any SuperpoweredFX class)
+                           true, // enableAudioPlayerAndDecoder (using SuperpoweredAdvancedAudioPlayer or SuperpoweredDecoder)
+                           false, // enableCryptographics (using Superpowered::RSAPublicKey, Superpowered::RSAPrivateKey, Superpowered::hasher or Superpowered::AES)
+                           false  // enableNetworking (using Superpowered::httpRequest)
+                           );
+    
     lastPositionSeconds = 0;
     selectedRow = 0;
     samplerate = 44100;
@@ -85,7 +98,7 @@ static bool audioProcessing(void *clientdata, float **buffers, unsigned int inpu
     player = new SuperpoweredAdvancedAudioPlayer((__bridge void *)self, playerEventCallback, samplerate, 0);
     interleavedBuffer = (float *)malloc(8192);
 
-    audioIO = [[SuperpoweredIOSAudioIO alloc] initWithDelegate:(id<SuperpoweredIOSAudioIODelegate>)self preferredBufferSize:12 preferredMinimumSamplerate:44100 audioSessionCategory:AVAudioSessionCategoryPlayback channels:2 audioProcessingCallback:audioProcessing clientdata:(__bridge void *)self];
+    audioIO = [[SuperpoweredIOSAudioIO alloc] initWithDelegate:(id<SuperpoweredIOSAudioIODelegate>)self preferredBufferSize:12 preferredSamplerate:44100 audioSessionCategory:AVAudioSessionCategoryPlayback channels:2 audioProcessingCallback:audioProcessing clientdata:(__bridge void *)self];
     [audioIO start];
 
     [sources selectRowAtIndexPath:[NSIndexPath indexPathForRow:0 inSection:0] animated:NO scrollPosition:UITableViewScrollPositionTop];
